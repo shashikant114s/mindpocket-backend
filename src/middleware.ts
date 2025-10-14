@@ -1,7 +1,8 @@
 import express, { type NextFunction, type Request, type Response } from "express";
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import { userModel } from "./db.js";
-const JWT_Secret = "ANUBHAW"
+const JWT_SECRET = process.env.JWT_SECRET;
+
 
 interface jwtTokenPayload extends Request {
     userName: string,
@@ -16,7 +17,11 @@ export const middleware = async (req: Request, res: Response, next: NextFunction
         })
     }
     try {
-        const tokenVerification = jwt.verify(header, JWT_Secret)
+        if (!JWT_SECRET) {
+                console.error("❌ JWT_SECRET is undefined. Check your .env and dotenv.config()");
+                process.exit(1);
+            }
+        const tokenVerification = jwt.verify(header, JWT_SECRET)
         console.log(tokenVerification)
         const userExists = await userModel.findOne({ userName: tokenVerification });
         if (!userExists) {

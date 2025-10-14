@@ -8,14 +8,14 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const app = express();
-const JWT_Secret = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET;
 const PORT = process.env.PORT;
 const BaseURL = process.env.BaseURL
 
 console.log("✅ Loaded ENV:", {
-  PORT: process.env.PORT,
-  MONGODB_URI: process.env.MONGODB_URI,
-  JWT_SECRET: process.env.JWT_SECRET,
+    PORT: process.env.PORT,
+    MONGODB_URI: process.env.MONGODB_URI,
+    JWT_SECRET: process.env.JWT_SECRET,
 });
 app.use(express.json());
 // signUp-Endpoint
@@ -40,7 +40,11 @@ app.post('/api/v1/signin', async (req, res) => {
     if (userExists) {
         const passwordCheck = await bcrypt.compare(password, userExists.password)
         if (passwordCheck) {
-            const token = jwt.sign(userExists.userName, JWT_Secret!) //here ! tells TypeScript: “I’m sure this value is not undefined.”
+            if (!JWT_SECRET) {
+                console.error("❌ JWT_SECRET is undefined. Check your .env and dotenv.config()");
+                process.exit(1);
+            }
+            const token = jwt.sign({ userName: userExists.userName }, JWT_SECRET)
             return res.json({
                 message: `Welcome ${userName}`,
                 jwt_token: token
