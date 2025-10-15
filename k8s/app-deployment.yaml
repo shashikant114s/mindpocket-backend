@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: node-app
-          image: shashikdocker/mindpocket-backend:latest
+          image: shashikdocker/mindpocket-backend:${GITHUB_SHA}
           env:
             - name: PORT
               value: "3000"
@@ -35,7 +35,7 @@ spec:
               memory: 128Mi
             limits:
               cpu: 200m
-              memory: 256Mi 
+              memory: 256Mi
 ---
 apiVersion: v1
 kind: Service
