@@ -5,10 +5,13 @@ on:
     types: [closed]
     branches:
       - development
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true || github.event_name == 'push'
     runs-on: ubuntu-latest
 
     steps:
@@ -23,6 +26,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/projects/mindpocket-backend
-            git pull origin development
+            git pull origin ${GITHUB_REF_NAME}
             docker-compose down
             docker-compose up --build -d
