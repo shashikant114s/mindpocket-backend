@@ -75,9 +75,10 @@ jobs:
             export KUBECONFIG=$HOME/.kube/config
             cd ~/projects/mindpocket-backend/k8s
 
-            echo "Replacing IMAGE_VERSION placeholder..."
+            echo "Replacing IMAGE_VERSION placeholder with ${IMAGE_VERSION}..."
             sed -i "s|IMAGE_VERSION|${IMAGE_VERSION}|g" app-deployment.yaml
+            grep image: app-deployment.yaml
 
             echo "Applying manifest..."
-            kubectl apply -f app-deployment.yaml -n mindpocket-backend
+            kubectl apply -f .
             kubectl rollout status deployment/mindpocket-backend-app -n mindpocket-backend
