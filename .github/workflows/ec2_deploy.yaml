@@ -56,4 +56,4 @@ jobs:
             export KUBECONFIG=$HOME/.kube/config
             # If deployment exists, update image; else apply YAMLs
             kubectl set image deployment/mindpocket-backend-app mindpocket-backend-app=shashikdocker/mindpocket-backend:${GITHUB_SHA} || \
-            kubectl apply -f ~/projects/mindpocket-backend/
+            kubectl apply -f ~/projects/mindpocket-backend/k8s
