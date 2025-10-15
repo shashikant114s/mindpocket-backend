@@ -28,13 +28,32 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PAT }}
 
+      - name: Increment Version
+        run: |
+          # Check if version.txt exists, initialize to 1.0 if not
+          if [ ! -f version.txt ]; then
+            echo "1.0" > version.txt
+          else
+            CURRENT_VERSION=$(cat version.txt)
+            # Increment the minor version (e.g., 1.0 -> 1.1)
+            NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF += 1; print $1"."$2}')
+            echo $NEW_VERSION > version.txt
+          fi
+          VERSION=$(cat version.txt)
+          echo "IMAGE_VERSION=$VERSION" >> $GITHUB_ENV
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add version.txt
+          git commit -m "Increment version to $VERSION" || echo "No changes to commit"
+          git push origin ${GITHUB_REF_NAME}
+
       - name: Build Docker Image
         run: |
-          docker build -t shashikdocker/mindpocket-backend:${GITHUB_SHA} .
+          docker build -t shashikdocker/mindpocket-backend:${IMAGE_VERSION} .
 
       - name: Push Docker Image
         run: |
-          docker push shashikdocker/mindpocket-backend:${GITHUB_SHA}
+          docker push shashikdocker/mindpocket-backend:${IMAGE_VERSION}
 
       - name: Copy Kubernetes Manifests to EC2
         uses: appleboy/scp-action@v0.1.4
@@ -54,6 +73,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             export KUBECONFIG=$HOME/.kube/config
-            # If deployment exists, update image; else apply YAMLs
-            kubectl set image deployment/mindpocket-backend-app mindpocket-backend-app=shashikdocker/mindpocket-backend:${GITHUB_SHA} || \
+            # Replace ${GITHUB_SHA} with the version in the YAML file
+            sed -i "s/\${GITHUB_SHA}/${IMAGE_VERSION}/g" ~/projects/mindpocket-backend/app-deployment.yaml
+            # If deployment exists, update image; else apply updated YAML
+            kubectl set image deployment/mindpocket-backend-app mindpocket-backend-app=shashikdocker/mindpocket-backend:${IMAGE_VERSION} || \
             kubectl apply -f ~/projects/mindpocket-backend/k8s
