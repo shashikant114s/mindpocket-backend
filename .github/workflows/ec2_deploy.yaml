@@ -15,33 +15,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repo
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Step 1.1: Refresh code to ensure latest changes
       - name: Refresh Code
         run: |
           git pull origin ${GITHUB_REF_NAME}
 
-      # Step 2: Log in to Docker Hub using PAT
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PAT }}
 
-      # Step 3: Build Docker image
       - name: Build Docker Image
         run: |
           docker build -t shashikdocker/mindpocket-backend:${GITHUB_SHA} .
 
-      # Step 4: Push Docker image to Docker Hub
       - name: Push Docker Image
         run: |
           docker push shashikdocker/mindpocket-backend:${GITHUB_SHA}
 
-      # Step 5: SSH into EC2 and deploy to k3s
+      - name: Copy Kubernetes Manifests to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "k8s/*.yaml"
+          target: "~/projects/mindpocket-backend/"
+          strip_components: 1
+
       - name: SSH into EC2 and Deploy to k3s
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -51,8 +55,5 @@ jobs:
           script: |
             export KUBECONFIG=$HOME/.kube/config
             # If deployment exists, update image; else apply YAMLs
-            if kubectl get deployment node-app -n mindpocket-backend; then
-                kubectl set image deployment/node-app node-app=shashikdocker/mindpocket-backend:${GITHUB_SHA} -n mindpocket-backend
-            else
-                kubectl apply -f ~/projects/mindpocket-backend/k8s
-            fi
+            kubectl set image deployment/mindpocket-backend-app mindpocket-backend-app=shashikdocker/mindpocket-backend:${GITHUB_SHA} || \
+            kubectl apply -f ~/projects/mindpocket-backend/

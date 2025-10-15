@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: node-app
+  name: mindpocket-backend-app
   namespace: mindpocket-backend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: node-app
+      app: mindpocket-backend-app
   template:
     metadata:
       labels:
-        app: node-app
+        app: mindpocket-backend-app
     spec:
       containers:
-        - name: node-app
+        - name: mindpocket-backend-app
           image: shashikdocker/mindpocket-backend:${GITHUB_SHA}
           env:
             - name: PORT
@@ -40,11 +40,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: node-app
+  name: mindpocket-backend-app
   namespace: mindpocket-backend
 spec:
   selector:
-    app: node-app
+    app: mindpocket-backend-app
   ports:
     - protocol: TCP
       port: 3000
