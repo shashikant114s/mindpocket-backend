@@ -28,32 +28,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PAT }}
 
-      - name: Increment Version
-        run: |
-          # Check if version.txt exists, initialize to 1.0 if not
-          if [ ! -f version.txt ]; then
-            echo "1.0" > version.txt
-          else
-            CURRENT_VERSION=$(cat version.txt)
-            # Increment the minor version (e.g., 1.0 -> 1.1)
-            NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF += 1; print $1"."$2}')
-            echo $NEW_VERSION > version.txt
-          fi
-          VERSION=$(cat version.txt)
-          echo "IMAGE_VERSION=$VERSION" >> $GITHUB_ENV
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add version.txt
-          git commit -m "Increment version to $VERSION" || echo "No changes to commit"
-          git push origin ${GITHUB_REF_NAME}
-
       - name: Build Docker Image
         run: |
-          docker build -t shashikdocker/mindpocket-backend:${IMAGE_VERSION} .
+          docker build -t shashikdocker/mindpocket-backend:latest .
 
       - name: Push Docker Image
         run: |
-          docker push shashikdocker/mindpocket-backend:${IMAGE_VERSION}
+          docker push shashikdocker/mindpocket-backend:latest
 
       - name: Copy Kubernetes Manifests to EC2
         uses: appleboy/scp-action@v0.1.4
@@ -71,16 +52,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: IMAGE_VERSION
           script: |
             export KUBECONFIG=$HOME/.kube/config
             cd ~/projects/mindpocket-backend/k8s
-
-            echo "Replacing IMAGE_VERSION placeholder with ${IMAGE_VERSION}..."
-            sed -i "s|IMAGE_VERSION|${IMAGE_VERSION}|g" app-deployment.yaml
-            echo "Updated image line:"
-            grep image: app-deployment.yaml || echo "No image line found!"
-
             echo "Applying manifest..."
             kubectl apply -f .
             kubectl rollout status deployment/mindpocket-backend-app -n mindpocket-backend
