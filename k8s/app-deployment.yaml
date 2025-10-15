@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-app
+  namespace: mindpocket-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: node-app
+  template:
+    metadata:
+      labels:
+        app: node-app
+    spec:
+      containers:
+        - name: node-app
+          image: shashikdocker/mindpocket-backend:latest
+          env:
+            - name: PORT
+              value: "3000"
+            - name: MONGODB_URI
+              value: mongodb://root:example@mongodb:27017/mindpocketDB?authSource=admin
+            - name: JWT_SECRET
+              value: "3bfa5b4fe58f21fde9d43271f711ed15"
+            - name: BaseURL
+              value: http://localhost:3000/share/
+            - name: NODE_ENV
+              value: production
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-app
+  namespace: mindpocket-backend
+spec:
+  selector:
+    app: node-app
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP
