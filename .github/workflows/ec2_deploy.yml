@@ -50,6 +50,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             export KUBECONFIG=$HOME/.kube/config
-            # Update deployment image if exists, otherwise apply YAML
-            kubectl set image deployment/mindpocket-backend mindpocket-backend=shashikdocker/mindpocket-backend:${GITHUB_SHA} --record || \
-            kubectl apply -f ~/projects/mindpocket-backend/k8s .
+            # If deployment exists, update image; else apply YAMLs
+            kubectl set image deployment/mindpocket-backend mindpocket-backend=shashikdocker/mindpocket-backend:${GITHUB_SHA} || \
+            kubectl apply -f ~/projects/mindpocket-backend/k8s
