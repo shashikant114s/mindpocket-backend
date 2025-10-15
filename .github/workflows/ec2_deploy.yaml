@@ -71,13 +71,15 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: IMAGE_VERSION
           script: |
             export KUBECONFIG=$HOME/.kube/config
             cd ~/projects/mindpocket-backend/k8s
 
             echo "Replacing IMAGE_VERSION placeholder with ${IMAGE_VERSION}..."
             sed -i "s|IMAGE_VERSION|${IMAGE_VERSION}|g" app-deployment.yaml
-            grep image: app-deployment.yaml
+            echo "Updated image line:"
+            grep image: app-deployment.yaml || echo "No image line found!"
 
             echo "Applying manifest..."
             kubectl apply -f .
