@@ -73,11 +73,11 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             export KUBECONFIG=$HOME/.kube/config
-            # Replace ${GITHUB_SHA} with the version in the YAML file
-            # Update image in existing deployment (preferred)
-            kubectl set image deployment/mindpocket-backend-app \
-            mindpocket-backend-app=shashikdocker/mindpocket-backend:${IMAGE_VERSION} \
-            -n mindpocket-backend || \
-            # If deployment doesn't exist, apply manifest
-            kubectl apply -f ~/projects/mindpocket-backend/k8s
+            cd ~/projects/mindpocket-backend/k8s
+
+            echo "Replacing IMAGE_VERSION placeholder..."
+            sed -i "s|IMAGE_VERSION|${IMAGE_VERSION}|g" app-deployment.yaml
+
+            echo "Applying manifest..."
+            kubectl apply -f app-deployment.yaml -n mindpocket-backend
             kubectl rollout status deployment/mindpocket-backend-app -n mindpocket-backend
