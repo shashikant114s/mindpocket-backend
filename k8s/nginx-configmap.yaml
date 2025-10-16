@@ -4,25 +4,20 @@ metadata:
   name: nginx-config
   namespace: mindpocket-backend
 data:
-  nginx.conf: |
-    events {}
+  default.conf: |
+    upstream node_app {
+        server mindpocket-backend-app:3000;
+    }
 
-    http {
-        upstream node_app {
-            # Use the backend service name and port
-            server mindpocket-backend-app:3000;
-        }
+    server {
+        listen 80;
 
-        server {
-            listen 80;
-
-            location / {
-                proxy_pass http://node_app;
-                proxy_http_version 1.1;
-                proxy_set_header Upgrade $http_upgrade;
-                proxy_set_header Connection 'upgrade';
-                proxy_set_header Host $host;
-                proxy_cache_bypass $http_upgrade;
-            }
+        location / {
+            proxy_pass http://node_app;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
         }
     }
